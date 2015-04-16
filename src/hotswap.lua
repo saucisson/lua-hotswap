@@ -12,7 +12,7 @@ local function hotswap (name, no_error)
   local filename = filenames      [name]
   if loaded then
     if not filename then
-      return loaded
+      return loaded, false
     end
     local file = io.open (filename, "r")
     if not file then
@@ -25,7 +25,7 @@ local function hotswap (name, no_error)
     local check = xxhash.xxh32 (file:read "*all", seed)
     file:close ()
     if hash == check then
-      return loaded
+      return loaded, false
     end
     package.loaded [name] = nil
     filenames      [name] = nil
@@ -34,7 +34,7 @@ local function hotswap (name, no_error)
     package.loaded [name] = result
     filenames      [name] = filename
     hashes         [name] = check
-    return result
+    return result, true
   end
   filename = package.searchpath (name, package.path)
   if not filename then
@@ -50,7 +50,7 @@ local function hotswap (name, no_error)
   package.loaded [name] = result
   filenames      [name] = filename
   hashes         [name] = hash
-  return result
+  return result, true
 end
 
 --    > hotswap = require "hotswap"
