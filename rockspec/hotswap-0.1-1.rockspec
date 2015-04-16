@@ -1,4 +1,4 @@
-package = "hotswsap"
+package = "hotswap"
 version = "0.1-1"
 
 source = {
