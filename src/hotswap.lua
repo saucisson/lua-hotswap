@@ -7,7 +7,7 @@ local hashes    = {}
 
 local seed = 0x5bd1e995
 
-local function hotswap (name)
+local function hotswap (name, no_error)
   local loaded   = package.loaded [name]
   local filename = filenames      [name]
   if loaded then
@@ -38,7 +38,11 @@ local function hotswap (name)
   end
   filename = package.searchpath (name, package.path)
   if not filename then
-    error ("module '" .. name .. "' not found")
+    if no_error then
+      return nil, "module '" .. name .. "' not found"
+    else
+      error ("module '" .. name .. "' not found")
+    end
   end
   local result = dofile (filename)
   local file   = io.open (filename, "r")
@@ -67,5 +71,8 @@ end
 --    > = hotswap "example"
 --    error: "module 'example' not found"
 
+--    > os.remove "example.lua"
+--    > = hotswap ("example", true)
+--    nil
 
 return hotswap
