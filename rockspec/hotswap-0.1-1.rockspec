@@ -15,7 +15,7 @@ description = {
 
 dependencies = {
   "compat52 ~> 0",
-  "xxhash   ~> 1",
+  "xxhash   ~> v1",
 }
 
 build = {
