@@ -30,7 +30,16 @@ local function hotswap (name, no_error)
     package.loaded [name] = nil
     filenames      [name] = nil
     hashes         [name] = nil
-    local result = dofile (filename)
+    local result
+    if no_error then
+      local ok
+      ok, result = pcall (dofile, filename)
+      if not ok then
+        return nil, result
+      end
+    else
+      result = dofile (filename)
+    end
     package.loaded [name] = result
     filenames      [name] = filename
     hashes         [name] = check
@@ -44,7 +53,16 @@ local function hotswap (name, no_error)
       error ("module '" .. name .. "' not found")
     end
   end
-  local result = dofile (filename)
+  local result
+  if no_error then
+    local ok
+    ok, result = pcall (dofile, filename)
+    if not ok then
+      return nil, result
+    end
+  else
+    result = dofile (filename)
+  end
   local file   = io.open (filename, "r")
   local hash   = xxhash.xxh32 (file:read "*all", seed)
   package.loaded [name] = result
