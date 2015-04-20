@@ -7,6 +7,8 @@ end
 
 local Hotswap = {}
 
+Hotswap.__index = Hotswap
+
 function Hotswap.new (options)
   if type (options) ~= "table" then
     options = nil
@@ -47,10 +49,12 @@ end
 function Hotswap.preload (hotswap, name)
   local current  = hotswap.preloads [name]
   local required = package.preload  [name]
-  if required == nil then
+  if current and not required then
     hotswap.loaded   [name] = nil
     hotswap.preloads [name] = nil
     hotswap.sources  [name] = nil
+  end
+  if not required then
     return Hotswap.file (hotswap, name)
   elseif current == required then
     return hotswap.loaded [name], false
@@ -105,14 +109,18 @@ function Hotswap.file (hotswap, name)
   error ("module '" .. name .. "' not found")
 end
 
+local unpack = table.unpack or unpack
+
 function Hotswap.__call (hotswap, name, no_error)
-  local ok, result = pcall (Hotswap.preload, hotswap, name)
-  if ok and result then
-    return result
-  elseif no_error then
-    return nil, result
+  if no_error then
+    local result = { pcall (Hotswap.preload, hotswap, name) }
+    if result [1] then
+      return select (2, unpack (result))
+    else
+      return nil, result [2]
+    end
   else
-    error (result)
+    return Hotswap.preload (hotswap, name)
   end
 end
 
