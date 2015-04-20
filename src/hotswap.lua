@@ -56,13 +56,17 @@ local function hotswap (name, no_error)
     hashes    [name] = nil
     local result
     if no_error then
-      local ok
-      ok, result = pcall (dofile, filename, name)
+      local f, err = loadfile (filename)
+      if not f then
+        return nil, err
+      end
+      local ok, res = pcall (f, name)
       if not ok then
         return nil, result
       end
+      result = res
     else
-      result = dofile (filename, name)
+      result = loadfile (filename) (name)
     end
     loaded    [name] = result
     filenames [name] = filename
@@ -78,13 +82,17 @@ local function hotswap (name, no_error)
     if filename then
       local result
       if no_error then
-        local ok
-        ok, result = pcall (dofile, filename)
+        local f, err = loadfile (filename)
+        if not f then
+          return nil, err
+        end
+        local ok, res = pcall (f, name)
         if not ok then
           return nil, result
         end
+        result = res
       else
-        result = dofile (filename)
+        result = loadfile (filename) (name)
       end
       local file   = io.open (filename, "r")
       local hash   = xxhash.xxh32 (file:read "*all", seed)
