@@ -1,5 +1,10 @@
 local xxhash = require "xxhash"
 
+if not package
+or not package.searchpath then
+  require "compat52"
+end
+
 local Hotswap = {}
 
 function Hotswap.new (options)
@@ -7,17 +12,21 @@ function Hotswap.new (options)
     options = nil
   end
   options = options or {}
-  options.register  = options.register or nil
-  options.seed      = options.seed     or 0x5bd1e995
-  options.hashes    = {}
-  options.loaded    = {}
-  options.preloads  = {}
-  options.sources   = {}
+  options.register   = options.register or nil
+  options.seed       = options.seed     or 0x5bd1e995
+  options.hashes     = {}
+  options.loaded     = {}
+  options.preloads   = {}
+  options.registered = {}
+  options.sources    = {}
   return setmetatable (options, Hotswap)
 end
 
 function Hotswap.on_change (hotswap, name)
   local filename = hotswap.sources [name]
+  if type (filename) ~= "string" then
+    return
+  end
   local file     = io.open (filename, "r")
   if not file then
     hotswap.hashes  [name] = nil
@@ -55,7 +64,7 @@ function Hotswap.preload (hotswap, name)
 end
 
 function Hotswap.file (hotswap, name)
-  if not hotswap.register then
+  if not hotswap.registered [name] then
     Hotswap.on_change (hotswap, name)
   end
   local filename = hotswap.sources [name]
@@ -84,23 +93,26 @@ function Hotswap.file (hotswap, name)
       hotswap.hashes  [name] = hash
       hotswap.loaded  [name] = result
       hotswap.sources [name] = filename
-      hotswap.register (filename, function ()
-        Hotswap.on_change (hotswap, name)
-      end)
+      if hotswap.register then
+        hotswap.register (filename, function ()
+          Hotswap.on_change (hotswap, name)
+        end)
+        hotswap.registered [name] = true
+      end
       return result, true
     end
   end
-  return nil, "module '" .. name .. "' not found"
+  error ("module '" .. name .. "' not found")
 end
 
 function Hotswap.__call (hotswap, name, no_error)
-  local result, err = pcall (Hotswap.preload, hotswap, name)
-  if result then
+  local ok, result = pcall (Hotswap.preload, hotswap, name)
+  if ok and result then
     return result
   elseif no_error then
-    return nil, err
+    return nil, result
   else
-    error (err)
+    error (result)
   end
 end
 
