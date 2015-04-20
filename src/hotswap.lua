@@ -55,7 +55,7 @@ function Hotswap.preload (hotswap, name)
     hotswap.sources  [name] = nil
   end
   if not required then
-    return Hotswap.file (hotswap, name)
+    return Hotswap.module (hotswap, name)
   elseif current == required then
     return hotswap.loaded [name], false
   else
@@ -67,7 +67,7 @@ function Hotswap.preload (hotswap, name)
   end
 end
 
-function Hotswap.file (hotswap, name)
+function Hotswap.module (hotswap, name)
   if not hotswap.registered [name] then
     Hotswap.on_change (hotswap, name)
   end
@@ -94,6 +94,26 @@ function Hotswap.file (hotswap, name)
       local result = f (name)
       local file   = io.open (filename, "r")
       local hash   = xxhash.xxh32 (file:read "*all", hotswap.seed)
+      file:close ()
+      hotswap.hashes  [name] = hash
+      hotswap.loaded  [name] = result
+      hotswap.sources [name] = filename
+      if hotswap.register then
+        hotswap.register (filename, function ()
+          Hotswap.on_change (hotswap, name)
+        end)
+        hotswap.registered [name] = true
+      end
+      return result, true
+    end
+  end
+  do
+    local filename = name
+    local file   = io.open (filename, "r")
+    if file then
+      local result = file:read "*all"
+      local hash   = xxhash.xxh32 (result, hotswap.seed)
+      file:close ()
       hotswap.hashes  [name] = hash
       hotswap.loaded  [name] = result
       hotswap.sources [name] = filename
