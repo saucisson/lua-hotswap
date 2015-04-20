@@ -1,7 +1,6 @@
 require "compat52"
 local xxhash     = require "xxhash"
 
-
 local filenames = {}
 local hashes    = {}
 
@@ -45,30 +44,35 @@ local function hotswap (name, no_error)
     hashes         [name] = check
     return result, true
   end
-  filename = package.searchpath (name, package.path)
-  if not filename then
-    if no_error then
-      return nil, "module '" .. name .. "' not found"
-    else
-      error ("module '" .. name .. "' not found")
+  for _, path in ipairs {
+    package.path,
+    package.cpath,
+  } do
+    filename = package.searchpath (name, path)
+    if filename then
+      local result
+      if no_error then
+        local ok
+        ok, result = pcall (dofile, filename)
+        if not ok then
+          return nil, result
+        end
+      else
+        result = dofile (filename)
+      end
+      local file   = io.open (filename, "r")
+      local hash   = xxhash.xxh32 (file:read "*all", seed)
+      package.loaded [name] = result
+      filenames      [name] = filename
+      hashes         [name] = hash
+      return result, true
     end
   end
-  local result
   if no_error then
-    local ok
-    ok, result = pcall (dofile, filename)
-    if not ok then
-      return nil, result
-    end
+    return nil, "module '" .. name .. "' not found"
   else
-    result = dofile (filename)
+    error ("module '" .. name .. "' not found")
   end
-  local file   = io.open (filename, "r")
-  local hash   = xxhash.xxh32 (file:read "*all", seed)
-  package.loaded [name] = result
-  filenames      [name] = filename
-  hashes         [name] = hash
-  return result, true
 end
 
 --    > hotswap = require "hotswap"
