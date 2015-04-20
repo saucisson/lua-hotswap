@@ -1,49 +1,75 @@
-require "compat52"
-local xxhash     = require "xxhash"
+               require "compat52"
+local xxhash = require "xxhash"
 
+local loaded    = {}
 local filenames = {}
 local hashes    = {}
+local preloads  = {}
 
 local seed = 0x5bd1e995
 
 local function hotswap (name, no_error)
-  local loaded   = package.loaded [name]
-  local filename = filenames      [name]
-  if loaded then
-    if not filename then
-      return loaded, false
+  local found = loaded [name]
+
+  local preload = package.preload [name]
+  if preload then
+    if preloads [name] == preload then
+      return found
+    else
+      local result
+      if no_error then
+        local ok
+        ok, result = pcall (preload, name)
+        if not ok then
+          return nil, result
+        end
+      else
+        result = preload (name)
+      end
+      loaded   [name] = result
+      preloads [name] = preload
+      return result
     end
+  end
+
+  local filename = filenames [name]
+  if found and not filename then
+    return found, false
+  end
+  
+  if found then
     local file = io.open (filename, "r")
     if not file then
-      package.loaded [name] = nil
-      filenames      [name] = nil
-      hashes         [name] = nil
+      loaded    [name] = nil
+      filenames [name] = nil
+      hashes    [name] = nil
       return hotswap (name)
     end
     local hash  = hashes [name]
     local check = xxhash.xxh32 (file:read "*all", seed)
     file:close ()
     if hash == check then
-      return loaded, false
+      return found, false
     end
-    package.loaded [name] = nil
-    filenames      [name] = nil
-    hashes         [name] = nil
+    loaded    [name] = nil
+    filenames [name] = nil
+    hashes    [name] = nil
     local result
     if no_error then
       local ok
-      ok, result = pcall (dofile, filename)
+      ok, result = pcall (dofile, filename, name)
       if not ok then
         return nil, result
       end
     else
-      result = dofile (filename)
+      result = dofile (filename, name)
     end
-    package.loaded [name] = result
-    filenames      [name] = filename
-    hashes         [name] = check
+    loaded    [name] = result
+    filenames [name] = filename
+    hashes    [name] = check
     return result, true
   end
+
   for _, path in ipairs {
     package.path,
     package.cpath,
@@ -62,9 +88,9 @@ local function hotswap (name, no_error)
       end
       local file   = io.open (filename, "r")
       local hash   = xxhash.xxh32 (file:read "*all", seed)
-      package.loaded [name] = result
-      filenames      [name] = filename
-      hashes         [name] = hash
+      loaded    [name] = result
+      filenames [name] = filename
+      hashes    [name] = hash
       return result, true
     end
   end
