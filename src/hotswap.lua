@@ -66,7 +66,11 @@ local function hotswap (name, no_error)
       end
       result = res
     else
-      result = loadfile (filename) (name)
+      local f, err = loadfile (filename)
+      if not f then
+        error (err)
+      end
+      result = f (name)
     end
     loaded    [name] = result
     filenames [name] = filename
@@ -74,15 +78,21 @@ local function hotswap (name, no_error)
     return result, true
   end
 
-  for _, path in ipairs {
+  for i, path in ipairs {
     package.path,
     package.cpath,
   } do
     filename = package.searchpath (name, path)
     if filename then
+      local load, target
+      if i == 1 then
+        load, target = loadfile, nil
+      else
+        load, target = package.loadlib, "luaopen_" .. name
+      end
       local result
       if no_error then
-        local f, err = loadfile (filename)
+        local f, err = load (filename, target)
         if not f then
           return nil, err
         end
@@ -92,7 +102,11 @@ local function hotswap (name, no_error)
         end
         result = res
       else
-        result = loadfile (filename) (name)
+        local f, err = load (filename, target)
+        if not f then
+          error (err)
+        end
+        result = f (name)
       end
       local file   = io.open (filename, "r")
       local hash   = xxhash.xxh32 (file:read "*all", seed)
