@@ -1,88 +1,72 @@
-               require "compat52"
 local xxhash = require "xxhash"
 
-local loaded    = {}
-local filenames = {}
-local hashes    = {}
-local preloads  = {}
+local Hotswap = {}
 
-local seed = 0x5bd1e995
-
-local function hotswap (name, no_error)
-  local found = loaded [name]
-
-  local preload = package.preload [name]
-  if preload then
-    if preloads [name] == preload then
-      return found
-    else
-      local result
-      if no_error then
-        local ok
-        ok, result = pcall (preload, name)
-        if not ok then
-          return nil, result
-        end
-      else
-        result = preload (name)
-      end
-      loaded   [name] = result
-      preloads [name] = preload
-      return result
-    end
+function Hotswap.new (options)
+  if type (options) ~= "table" then
+    options = nil
   end
+  options = options or {}
+  options.register  = options.register or nil
+  options.seed      = options.seed     or 0x5bd1e995
+  options.hashes    = {}
+  options.loaded    = {}
+  options.preloads  = {}
+  options.sources   = {}
+  return setmetatable (options, Hotswap)
+end
 
-  local filename = filenames [name]
-  if found and not filename then
-    return found, false
+function Hotswap.on_change (hotswap, name)
+  local filename = hotswap.sources [name]
+  local file     = io.open (filename, "r")
+  if not file then
+    hotswap.hashes  [name] = nil
+    hotswap.loaded  [name] = nil
+    hotswap.sources [name] = nil
+    return
   end
-  
-  if found then
-    local file = io.open (filename, "r")
-    if not file then
-      loaded    [name] = nil
-      filenames [name] = nil
-      hashes    [name] = nil
-      return hotswap (name)
-    end
-    local hash  = hashes [name]
-    local check = xxhash.xxh32 (file:read "*all", seed)
-    file:close ()
-    if hash == check then
-      return found, false
-    end
-    loaded    [name] = nil
-    filenames [name] = nil
-    hashes    [name] = nil
-    local result
-    if no_error then
-      local f, err = loadfile (filename)
-      if not f then
-        return nil, err
-      end
-      local ok, res = pcall (f, name)
-      if not ok then
-        return nil, result
-      end
-      result = res
-    else
-      local f, err = loadfile (filename)
-      if not f then
-        error (err)
-      end
-      result = f (name)
-    end
-    loaded    [name] = result
-    filenames [name] = filename
-    hashes    [name] = check
+  local hash = xxhash.xxh32 (file:read "*all", hotswap.seed)
+  file:close ()
+  if hash ~= hotswap.hashes [name] then
+    hotswap.hashes  [name] = nil
+    hotswap.loaded  [name] = nil
+    hotswap.sources [name] = nil
+    return
+  end
+end
+
+function Hotswap.preload (hotswap, name)
+  local current  = hotswap.preloads [name]
+  local required = package.preload  [name]
+  if required == nil then
+    hotswap.loaded   [name] = nil
+    hotswap.preloads [name] = nil
+    hotswap.sources  [name] = nil
+    return Hotswap.file (hotswap, name)
+  elseif current == required then
+    return hotswap.loaded [name], false
+  else
+    local result = required (name)
+    hotswap.loaded   [name] = result
+    hotswap.preloads [name] = required
+    hotswap.sources  [name] = package.preload
     return result, true
   end
+end
 
+function Hotswap.file (hotswap, name)
+  if not hotswap.register then
+    Hotswap.on_change (hotswap, name)
+  end
+  local filename = hotswap.sources [name]
+  if filename then
+    return hotswap.loaded [name]
+  end
   for i, path in ipairs {
     package.path,
     package.cpath,
   } do
-    filename = package.searchpath (name, path)
+    local filename = package.searchpath (name, path)
     if filename then
       local load, target
       if i == 1 then
@@ -90,36 +74,33 @@ local function hotswap (name, no_error)
       else
         load, target = package.loadlib, "luaopen_" .. name
       end
-      local result
-      if no_error then
-        local f, err = load (filename, target)
-        if not f then
-          return nil, err
-        end
-        local ok, res = pcall (f, name)
-        if not ok then
-          return nil, result
-        end
-        result = res
-      else
-        local f, err = load (filename, target)
-        if not f then
-          error (err)
-        end
-        result = f (name)
+      local f, err = load (filename, target)
+      if not f then
+        error (err)
       end
+      local result = f (name)
       local file   = io.open (filename, "r")
-      local hash   = xxhash.xxh32 (file:read "*all", seed)
-      loaded    [name] = result
-      filenames [name] = filename
-      hashes    [name] = hash
+      local hash   = xxhash.xxh32 (file:read "*all", hotswap.seed)
+      hotswap.hashes  [name] = hash
+      hotswap.loaded  [name] = result
+      hotswap.sources [name] = filename
+      hotswap.register (filename, function ()
+        Hotswap.on_change (hotswap, name)
+      end)
       return result, true
     end
   end
-  if no_error then
-    return nil, "module '" .. name .. "' not found"
+  return nil, "module '" .. name .. "' not found"
+end
+
+function Hotswap.__call (hotswap, name, no_error)
+  local result, err = pcall (Hotswap.preload, hotswap, name)
+  if result then
+    return result
+  elseif no_error then
+    return nil, err
   else
-    error ("module '" .. name .. "' not found")
+    error (err)
   end
 end
 
@@ -145,4 +126,4 @@ end
 --    > = hotswap ("example", true)
 --    nil
 
-return hotswap
+return Hotswap.new ()
