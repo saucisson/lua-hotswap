@@ -27,14 +27,14 @@ end
 function Hotswap.on_change (hotswap, name)
   local filename = hotswap.sources [name]
   if type (filename) ~= "string" then
-    return
+    return true
   end
-  local file     = io.open (filename, "r")
+  local file = io.open (filename, "r")
   if not file then
     hotswap.hashes  [name] = nil
     hotswap.loaded  [name] = nil
     hotswap.sources [name] = nil
-    return
+    return true
   end
   local hash = xxhash.xxh32 (file:read "*all", hotswap.seed)
   file:close ()
@@ -42,7 +42,7 @@ function Hotswap.on_change (hotswap, name)
     hotswap.hashes  [name] = nil
     hotswap.loaded  [name] = nil
     hotswap.sources [name] = nil
-    return
+    return true
   end
 end
 
@@ -98,18 +98,19 @@ function Hotswap.module (hotswap, name)
       hotswap.hashes  [name] = hash
       hotswap.loaded  [name] = result
       hotswap.sources [name] = filename
-      if hotswap.register then
+      if  hotswap.register
+      and hotswap.register ~= hotswap.registered [name] then
         hotswap.register (filename, function ()
-          Hotswap.on_change (hotswap, name)
+          return Hotswap.on_change (hotswap, name)
         end)
-        hotswap.registered [name] = true
+        hotswap.registered [name] = hotswap.register
       end
       return result, true
     end
   end
   do
     local filename = name
-    local file   = io.open (filename, "r")
+    local file     = io.open (filename, "r")
     if file then
       local result = file:read "*all"
       local hash   = xxhash.xxh32 (result, hotswap.seed)
@@ -117,11 +118,12 @@ function Hotswap.module (hotswap, name)
       hotswap.hashes  [name] = hash
       hotswap.loaded  [name] = result
       hotswap.sources [name] = filename
-      if hotswap.register then
+      if  hotswap.register
+      and hotswap.register ~= hotswap.registered [name] then
         hotswap.register (filename, function ()
-          Hotswap.on_change (hotswap, name)
+          return Hotswap.on_change (hotswap, name)
         end)
-        hotswap.registered [name] = true
+        hotswap.registered [name] = hotswap.register
       end
       return result, true
     end
