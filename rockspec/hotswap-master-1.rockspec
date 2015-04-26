@@ -13,8 +13,8 @@ description = {
 }
 
 dependencies = {
-  "compat52 ~> 0",
-  "xxhash   ~> v1",
+  "compat52 >= 0",
+  "xxhash   >= v1",
 }
 
 build = {
