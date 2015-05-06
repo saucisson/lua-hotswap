@@ -1,152 +1,109 @@
-local xxhash = require "xxhash"
-
-if not package
-or not package.searchpath then
-  require "compat52"
+if _VERSION == "Lua 5.1" then
+  if not package.searchers then
+    require "compat53"
+  end
+  package.searchers [1] = function (name)
+    return package.preload [name]
+  end
+  package.searchers [2] = function (name)
+    local path, err = package.searchpath (name, package.path)
+    if not path then
+      return nil, err
+    end
+    return loadfile (path), path
+  end
+  package.searchers [3] = function (name)
+    local path, err = package.searchpath (name, package.cpath)
+    if not path then
+      return nil, err
+    end
+    name = name:gsub ("%.", "_")
+    name = name:gsub ("[^%-]+%-", "")
+    return package.loadlib (path, "luaopen_" .. name), path
+  end
+  package.searchers [4] = function (name)
+    local prefix = name:match "^[^%.]+"
+    local path, err = package.searchpath (prefix, package.cpath)
+    if not path then
+      return nil, err
+    end
+    name = name:gsub ("%.", "_")
+    name = name:gsub ("[^%-]+%-", "")
+    return package.loadlib (path, "luaopen_" .. name), path
+  end
 end
 
 local Hotswap = {}
 
 Hotswap.__index = Hotswap
 
-function Hotswap.new (options)
-  if type (options) ~= "table" then
-    options = nil
+function Hotswap.new (t)
+  if type (t) ~= "table" then
+    t = {}
   end
-  options = options or {}
-  options.register   = options.register or nil
-  options.seed       = options.seed     or 0x5bd1e995
-  options.hashes     = {}
-  options.loaded     = {}
-  options.preloads   = {}
-  options.registered = {}
-  options.sources    = {}
-  return setmetatable (options, Hotswap)
+  local result    = {}
+  result.access   = t.access  or function () end
+  result.observe  = t.observe or function () end
+  result.changed  = function (_, name) result.loaded [name] = nil end
+  result.sources  = {}
+  result.modules  = {}
+  result.loaded   = {}
+  return setmetatable (result, Hotswap)
 end
 
-function Hotswap.on_change (hotswap, name)
-  local filename = hotswap.sources [name]
-  if type (filename) ~= "string" then
-    return true
+function Hotswap:__call (name, no_error)
+  if self.sources [name] then
+    self:access (name, self.sources [name])
   end
-  local file = io.open (filename, "r")
-  if not file then
-    hotswap.hashes  [name] = nil
-    hotswap.loaded  [name] = nil
-    hotswap.sources [name] = nil
-    return true
+  local loaded  = self.loaded [name]
+  if loaded then
+    return loaded
   end
-  local hash = xxhash.xxh32 (file:read "*all", hotswap.seed)
-  file:close ()
-  if hash ~= hotswap.hashes [name] then
-    hotswap.hashes  [name] = nil
-    hotswap.loaded  [name] = nil
-    hotswap.sources [name] = nil
-    return true
-  end
-end
-
-function Hotswap.preload (hotswap, name)
-  local current  = hotswap.preloads [name]
-  local required = package.preload  [name]
-  if current and not required then
-    hotswap.loaded   [name] = nil
-    hotswap.preloads [name] = nil
-    hotswap.sources  [name] = nil
-  end
-  if not required then
-    return Hotswap.module (hotswap, name)
-  elseif current == required then
-    return hotswap.loaded [name], false
-  else
-    local result = required (name)
-    hotswap.loaded   [name] = result
-    hotswap.preloads [name] = required
-    hotswap.sources  [name] = package.preload
-    return result, true
-  end
-end
-
-function Hotswap.module (hotswap, name)
-  if not hotswap.registered [name] then
-    Hotswap.on_change (hotswap, name)
-  end
-  local filename = hotswap.sources [name]
-  if filename then
-    return hotswap.loaded [name]
-  end
-  for i, path in ipairs {
-    package.path,
-    package.cpath,
-  } do
-    local filename = package.searchpath (name, path)
-    if filename then
-      local load, target
-      if i == 1 then
-        load, target = loadfile, nil
-      else
-        load, target = package.loadlib, "luaopen_" .. name
+  local errors = {
+    "module '" .. tostring (name) .. "' not found:",
+  }
+  for i = 1, #package.searchers do
+    local searcher = package.searchers [i]
+    local factory, path  = searcher (name)
+    if type (factory) == "function" then
+      local result  = factory (name)
+      if  type (result) ~= "function"
+      and type (result) ~= "table" then
+        error "module is neither a function nor a table"
       end
-      local f, err = load (filename, target)
-      if not f then
-        error (err)
+      self.modules [name] = result
+      self.sources [name] = path
+      self:observe (name, path)
+      local wrapper
+      if type (module) == "function" then
+        wrapper = function (...)
+          return self.modules [name] (...)
+        end
+      elseif type (module) == "table" then
+        local metatable = setmetatable ({
+          __index     = function (_, key)
+            return self.modules [name] [key]
+          end,
+          __metatable = getmetatable (module),
+        }, {
+          __index     = getmetatable (module),
+        })
+        wrapper = setmetatable ({}, metatable)
       end
-      local result = f (name)
-      local file   = io.open (filename, "r")
-      local hash   = xxhash.xxh32 (file:read "*all", hotswap.seed)
-      file:close ()
-      hotswap.hashes  [name] = hash
-      hotswap.loaded  [name] = result
-      hotswap.sources [name] = filename
-      if  hotswap.register
-      and hotswap.register ~= hotswap.registered [name] then
-        hotswap.register (filename, function ()
-          return Hotswap.on_change (hotswap, name)
-        end)
-        hotswap.registered [name] = hotswap.register
-      end
-      return result, true
-    end
-  end
-  do
-    local filename = name
-    local file     = io.open (filename, "r")
-    if file then
-      local result = file:read "*all"
-      local hash   = xxhash.xxh32 (result, hotswap.seed)
-      file:close ()
-      hotswap.hashes  [name] = hash
-      hotswap.loaded  [name] = result
-      hotswap.sources [name] = filename
-      if  hotswap.register
-      and hotswap.register ~= hotswap.registered [name] then
-        hotswap.register (filename, function ()
-          return Hotswap.on_change (hotswap, name)
-        end)
-        hotswap.registered [name] = hotswap.register
-      end
-      return result, true
-    end
-  end
-  error ("module '" .. name .. "' not found")
-end
-
-local unpack = table.unpack or unpack
-
-function Hotswap.__call (hotswap, name, no_error)
-  if no_error then
-    local result = { pcall (Hotswap.preload, hotswap, name) }
-    if result [1] then
-      return select (2, unpack (result))
+      self.loaded [name] = wrapper
+      return wrapper
     else
-      return nil, result [2]
+      errors [#errors+1] = path
     end
+  end
+  if no_error then
+    return nil
   else
-    return Hotswap.preload (hotswap, name)
+    error (table.concat (errors, "\n"))
   end
 end
 
---    > hotswap = require "hotswap"
+--    > hotswap = require "hotswap.hash"
 
 --    > local file = io.open ("example.lua", "w")
 --    > file:write [[ return 1 ]]
