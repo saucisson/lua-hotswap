@@ -134,6 +134,12 @@ function Hotswap:__call (name, no_error)
           __le        = function (_, rhs)
             return self.modules [name] <= rhs
           end,
+          __pairs     = function (_)
+            return pairs (self.modules [name])
+          end,
+          __ipairs    = function (_)
+            return ipairs (self.modules [name])
+          end,
         })
       else
         wrapper = result
