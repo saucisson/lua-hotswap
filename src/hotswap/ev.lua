@@ -9,18 +9,24 @@ function Ev.new (t)
   if type (t) ~= "table" then
     t = {}
   end
-  local result = Hotswap.new {
+  local result    = Hotswap.new {
     observe = Ev.observe,
   }
-  result.loop  = t.loop or ev.Loop.default
+  result.loop     = t.loop or ev.Loop.default
+  result.observed = {}
   return result
 end
 
 function Ev:observe (name, filename)
+  if self.observed [name] then
+    return
+  end
   local hotswap = self
-  ev.Stat.new (function ()
+  local stat = ev.Stat.new (function ()
     hotswap.loaded [name] = nil
-  end, filename):start (hotswap.loop)
+  end, filename)
+  self.observed [name] = stat
+  stat:start (hotswap.loop)
 end
 
 return Ev.new ()
