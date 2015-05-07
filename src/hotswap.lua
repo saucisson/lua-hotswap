@@ -89,11 +89,11 @@ function Hotswap:__call (name, no_error)
       self.sources [name] = path
       self:observe (name, path)
       local wrapper
-      if type (module) == "function" then
+      if type (result) == "function" then
         wrapper = function (...)
           return self.modules [name] (...)
         end
-      elseif type (module) == "table" then
+      elseif type (result) == "table" then
         local metatable = setmetatable ({
           __index     = function (_, key)
             return self.modules [name] [key]
