@@ -66,10 +66,24 @@ function Hotswap:__call (name, no_error)
     local searcher = package.searchers [i]
     local factory, path  = searcher (name)
     if type (factory) == "function" then
-      local result  = factory (name)
+      local result
+      if no_error then
+        local ok
+        ok, result = pcall (factory, name)
+        if not ok then
+          return nil, result
+        end
+      else
+        result = factory (name)
+      end
       if  type (result) ~= "function"
       and type (result) ~= "table" then
-        error "module is neither a function nor a table"
+        local err = "module is neither a function nor a table"
+        if no_error then
+          return nil, err
+        else
+          error (err)
+        end
       end
       self.modules [name] = result
       self.sources [name] = path
@@ -96,10 +110,11 @@ function Hotswap:__call (name, no_error)
       errors [#errors+1] = path
     end
   end
+  errors = table.concat (errors, "\n")
   if no_error then
-    return nil
+    return nil, errors
   else
-    error (table.concat (errors, "\n"))
+    error (errors)
   end
 end
 
