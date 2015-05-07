@@ -76,20 +76,11 @@ function Hotswap:__call (name, no_error)
       else
         result = factory (name)
       end
-      if  type (result) ~= "function"
-      and type (result) ~= "table" then
-        local err = "module is neither a function nor a table"
-        if no_error then
-          return nil, err
-        else
-          error (err)
-        end
-      end
       self.modules [name] = result
       self.sources [name] = path
       self:observe (name, path)
       local wrapper
-      if type (result) == "function" then
+      if     type (result) == "function" then
         wrapper = function (...)
           return self.modules [name] (...)
         end
@@ -144,6 +135,8 @@ function Hotswap:__call (name, no_error)
             return self.modules [name] <= rhs
           end,
         })
+      else
+        wrapper = result
       end
       self.loaded [name] = wrapper
       return wrapper
