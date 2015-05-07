@@ -94,15 +94,56 @@ function Hotswap:__call (name, no_error)
           return self.modules [name] (...)
         end
       elseif type (result) == "table" then
-        local metatable = setmetatable ({
+        wrapper = setmetatable ({}, {
           __index     = function (_, key)
             return self.modules [name] [key]
           end,
-          __metatable = getmetatable (module),
-        }, {
-          __index     = getmetatable (module),
+          __newindex  = function (_, key, value)
+            self.modules [name] [key] = value
+          end,
+          __mode      = nil,
+          __call      = function (_, ...)
+            return self.modules [name] (...)
+          end,
+          __metatable = getmetatable (result),
+          __tostring  = function (_)
+            return tostring (self.modules [name])
+          end,
+          __len       = function (_)
+            return # (self.modules [name])
+          end,
+          __gc        = nil,
+          __unm       = function (_)
+            return - (self.modules [name])
+          end,
+          __add       = function (_, rhs)
+            return self.modules [name] + rhs
+          end,
+          __mul= function (_, rhs)
+            return self.modules [name] * rhs
+          end,
+          __div       = function (_, rhs)
+            return self.modules [name] / rhs
+          end,
+          __mod       = function (_, rhs)
+            return self.modules [name] % rhs
+          end,
+          __pow       = function (_, rhs)
+            return self.modules [name] ^ rhs
+          end,
+          __concat    = function (_, rhs)
+            return self.modules [name] .. rhs
+          end,
+          __eq        = function (_, rhs)
+            return self.modules [name] == rhs
+          end,
+          __lt        = function (_, rhs)
+            return self.modules [name] <  rhs
+          end,
+          __le        = function (_, rhs)
+            return self.modules [name] <= rhs
+          end,
         })
-        wrapper = setmetatable ({}, metatable)
       end
       self.loaded [name] = wrapper
       return wrapper
