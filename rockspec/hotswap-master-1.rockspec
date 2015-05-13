@@ -13,6 +13,7 @@ description = {
 }
 
 dependencies = {
+  "compat53 >= 0",
 }
 
 build = {
