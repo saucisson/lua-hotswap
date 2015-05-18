@@ -22,5 +22,6 @@ build = {
     ["hotswap"     ] = "src/hotswap.lua",
     ["hotswap.hash"] = "src/hotswap/hash.lua",
     ["hotswap.ev"  ] = "src/hotswap/ev.lua",
+    ["hotswap.lfs" ] = "src/hotswap/lfs.lua",
   },
 }
