@@ -7,6 +7,7 @@ Hash.__call  = Hotswap.__call
 
 function Hash.new ()
   local result  = Hotswap.new {
+    new     = Hash.new,
     access  = Hash.access,
     observe = Hash.observe,
   }

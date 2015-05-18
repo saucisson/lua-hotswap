@@ -41,21 +41,35 @@ function Hotswap.new (t)
   if type (t) ~= "table" then
     t = {}
   end
-  local result    = {}
-  result.access   = t.access  or function () end
-  result.observe  = t.observe or function () end
-  result.changed  = function (_, name) result.loaded [name] = nil end
-  result.sources  = {}
-  result.modules  = {}
-  result.loaded   = {}
+  local result     = {}
+  result.new       = t.new     or Hotswap.new
+  result.access    = t.access  or function () end
+  result.observe   = t.observe or function () end
+  result.changed   = function (_, name) result.loaded [name] = nil end
+  result.sources   = {}
+  result.modules   = {}
+  result.loaded    = {}
+  result.on_change = setmetatable ({}, {
+    __index = function ()
+                return function () end
+              end,
+  })
   return setmetatable (result, Hotswap)
+end
+
+function Hotswap:require (name)
+  return self (name, false)
+end
+
+function Hotswap:try_require (name)
+  return self (name, true)
 end
 
 function Hotswap:__call (name, no_error)
   if self.sources [name] then
     self:access (name, self.sources [name])
   end
-  local loaded  = self.loaded [name]
+  local loaded = self.loaded [name]
   if loaded then
     return loaded
   end
@@ -78,9 +92,11 @@ function Hotswap:__call (name, no_error)
       end
       self.modules [name] = result
       self.sources [name] = path
-      self:observe (name, path)
+      if path then
+        self:observe (name, path)
+      end
       local wrapper
-      if     type (result) == "function" then
+      if type (result) == "function" then
         wrapper = function (...)
           return self.modules [name] (...)
         end
@@ -145,6 +161,7 @@ function Hotswap:__call (name, no_error)
         wrapper = result
       end
       self.loaded [name] = wrapper
+      self.on_change [name] (name, wrapper)
       return wrapper
     else
       errors [#errors+1] = path

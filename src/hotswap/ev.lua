@@ -10,6 +10,7 @@ function Ev.new (t)
     t = {}
   end
   local result    = Hotswap.new {
+    new     = Ev.new,
     observe = Ev.observe,
   }
   result.loop     = t.loop or ev.Loop.default
@@ -24,6 +25,7 @@ function Ev:observe (name, filename)
   local hotswap = self
   local stat = ev.Stat.new (function ()
     hotswap.loaded [name] = nil
+    hotswap:try_require (name)
   end, filename)
   self.observed [name] = stat
   stat:start (hotswap.loop)

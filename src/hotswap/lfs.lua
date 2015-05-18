@@ -7,6 +7,7 @@ Lfs.__call  = Hotswap.__call
 
 function Lfs.new ()
   local result  = Hotswap.new {
+    new     = Lfs.new,
     access  = Lfs.access,
     observe = Lfs.observe,
   }
