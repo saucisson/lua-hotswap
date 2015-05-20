@@ -35,17 +35,12 @@ end
 
 local Hotswap = {}
 
-Hotswap.__index = Hotswap
-
 function Hotswap.new (t)
-  if type (t) ~= "table" then
-    t = {}
-  end
-  local result     = {}
-  result.new       = t.new     or Hotswap.new
-  result.access    = t.access  or function () end
-  result.observe   = t.observe or function () end
-  result.changed   = function (_, name) result.loaded [name] = nil end
+  assert (t == nil or type (t) == "table")
+  local result     = t              or {}
+  result.new       = result.new     or Hotswap.new
+  result.access    = result.access  or function () end
+  result.observe   = result.observe or function () end
   result.sources   = {}
   result.modules   = {}
   result.loaded    = {}
@@ -54,18 +49,16 @@ function Hotswap.new (t)
                 return function () end
               end,
   })
+  result.require     = function (name)
+    return Hotswap.require (result, name, false)
+  end
+  result.try_require = function (name)
+    return Hotswap.require (result, name, true )
+  end
   return setmetatable (result, Hotswap)
 end
 
-function Hotswap:require (name)
-  return self (name, false)
-end
-
-function Hotswap:try_require (name)
-  return self (name, true)
-end
-
-function Hotswap:__call (name, no_error)
+function Hotswap:require (name, no_error)
   if self.sources [name] then
     self:access (name, self.sources [name])
   end

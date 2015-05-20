@@ -2,17 +2,13 @@ local lfs     = require "lfs"
 local Hotswap = getmetatable (require "hotswap")
 local Lfs     = {}
 
-Lfs.__index = Lfs
-Lfs.__call  = Hotswap.__call
-
 function Lfs.new ()
-  local result  = Hotswap.new {
+  return Hotswap.new {
     new     = Lfs.new,
     access  = Lfs.access,
     observe = Lfs.observe,
+    dates   = {},
   }
-  result.dates = {}
-  return result
 end
 
 function Lfs:access (name, filename)

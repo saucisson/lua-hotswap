@@ -2,18 +2,14 @@ local xxhash  = require "xxhash"
 local Hotswap = getmetatable (require "hotswap")
 local Hash    = {}
 
-Hash.__index = Hash
-Hash.__call  = Hotswap.__call
-
 function Hash.new ()
-  local result  = Hotswap.new {
+  return Hotswap.new {
     new     = Hash.new,
     access  = Hash.access,
     observe = Hash.observe,
+    hashes  = {},
+    seed    = 0x5bd1e995,
   }
-  result.hashes = {}
-  result.seed   = 0x5bd1e995
-  return result
 end
 
 function Hash:access (name, filename)
