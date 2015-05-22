@@ -33,6 +33,8 @@ if _VERSION == "Lua 5.1" then
   end
 end
 
+local lua_require = require
+
 local Hotswap = {}
 
 function Hotswap.new (t)
@@ -66,6 +68,13 @@ function Hotswap:require (name, no_error)
   if loaded then
     return loaded
   end
+  local lualoaded = package.loaded [name]
+  if lualoaded then
+    local wrapper = Hotswap.wrap (self, lualoaded, name)
+    self.modules [name] = lualoaded
+    self.loaded  [name] = wrapper
+    return wrapper
+  end
   local errors = {
     "module '" .. tostring (name) .. "' not found:",
   }
@@ -88,72 +97,8 @@ function Hotswap:require (name, no_error)
       if path then
         self:observe (name, path)
       end
-      local wrapper
-      if type (result) == "function" then
-        wrapper = function (...)
-          return self.modules [name] (...)
-        end
-      elseif type (result) == "table" then
-        wrapper = setmetatable ({}, {
-          __index     = function (_, key)
-            return self.modules [name] [key]
-          end,
-          __newindex  = function (_, key, value)
-            self.modules [name] [key] = value
-          end,
-          __mode      = nil,
-          __call      = function (_, ...)
-            return self.modules [name] (...)
-          end,
-          __metatable = getmetatable (result),
-          __tostring  = function (_)
-            return tostring (self.modules [name])
-          end,
-          __len       = function (_)
-            return # (self.modules [name])
-          end,
-          __gc        = nil,
-          __unm       = function (_)
-            return - (self.modules [name])
-          end,
-          __add       = function (_, rhs)
-            return self.modules [name] + rhs
-          end,
-          __mul= function (_, rhs)
-            return self.modules [name] * rhs
-          end,
-          __div       = function (_, rhs)
-            return self.modules [name] / rhs
-          end,
-          __mod       = function (_, rhs)
-            return self.modules [name] % rhs
-          end,
-          __pow       = function (_, rhs)
-            return self.modules [name] ^ rhs
-          end,
-          __concat    = function (_, rhs)
-            return self.modules [name] .. rhs
-          end,
-          __eq        = function (_, rhs)
-            return self.modules [name] == rhs
-          end,
-          __lt        = function (_, rhs)
-            return self.modules [name] <  rhs
-          end,
-          __le        = function (_, rhs)
-            return self.modules [name] <= rhs
-          end,
-          __pairs     = function (_)
-            return pairs (self.modules [name])
-          end,
-          __ipairs    = function (_)
-            return ipairs (self.modules [name])
-          end,
-        })
-      else
-        wrapper = result
-      end
-      self.loaded [name] = wrapper
+      local wrapper = Hotswap.wrap (self, result, name)
+      self.loaded    [name] = wrapper
       self.on_change [name] (name, wrapper)
       return wrapper
     else
@@ -165,6 +110,73 @@ function Hotswap:require (name, no_error)
     return nil, errors
   else
     error (errors)
+  end
+end
+
+function Hotswap:wrap (result, name)
+  if type (result) == "function" then
+    return function (...)
+      return self.modules [name] (...)
+    end
+  elseif type (result) == "table" then
+    return setmetatable ({}, {
+      __index     = function (_, key)
+        return self.modules [name] [key]
+      end,
+      __newindex  = function (_, key, value)
+        self.modules [name] [key] = value
+      end,
+      __mode      = nil,
+      __call      = function (_, ...)
+        return self.modules [name] (...)
+      end,
+      __metatable = getmetatable (result),
+      __tostring  = function (_)
+        return tostring (self.modules [name])
+      end,
+      __len       = function (_)
+        return # (self.modules [name])
+      end,
+      __gc        = nil,
+      __unm       = function (_)
+        return - (self.modules [name])
+      end,
+      __add       = function (_, rhs)
+        return self.modules [name] + rhs
+      end,
+      __mul= function (_, rhs)
+        return self.modules [name] * rhs
+      end,
+      __div       = function (_, rhs)
+        return self.modules [name] / rhs
+      end,
+      __mod       = function (_, rhs)
+        return self.modules [name] % rhs
+      end,
+      __pow       = function (_, rhs)
+        return self.modules [name] ^ rhs
+      end,
+      __concat    = function (_, rhs)
+        return self.modules [name] .. rhs
+      end,
+      __eq        = function (_, rhs)
+        return self.modules [name] == rhs
+      end,
+      __lt        = function (_, rhs)
+        return self.modules [name] <  rhs
+      end,
+      __le        = function (_, rhs)
+        return self.modules [name] <= rhs
+      end,
+      __pairs     = function (_)
+        return pairs (self.modules [name])
+      end,
+      __ipairs    = function (_)
+        return ipairs (self.modules [name])
+      end,
+    })
+  else
+    return result
   end
 end
 
