@@ -33,24 +33,18 @@ if _VERSION == "Lua 5.1" then
   end
 end
 
-local lua_require = require
-
 local Hotswap = {}
 
 function Hotswap.new (t)
   assert (t == nil or type (t) == "table")
-  local result     = t              or {}
-  result.new       = result.new     or Hotswap.new
-  result.access    = result.access  or function () end
-  result.observe   = result.observe or function () end
-  result.sources   = {}
-  result.modules   = {}
-  result.loaded    = {}
-  result.on_change = setmetatable ({}, {
-    __index = function ()
-                return function () end
-              end,
-  })
+  local result       = t              or {}
+  result.new         = result.new     or Hotswap.new
+  result.access      = result.access  or function () end
+  result.observe     = result.observe or function () end
+  result.sources     = {}
+  result.modules     = {}
+  result.loaded      = {}
+  result.on_change   = {}
   result.require     = function (name)
     return Hotswap.require (result, name, false)
   end
@@ -99,7 +93,9 @@ function Hotswap:require (name, no_error)
       end
       local wrapper = Hotswap.wrap (self, result, name)
       self.loaded    [name] = wrapper
-      self.on_change [name] (name, wrapper)
+      for j = 1, #self.on_change do
+        self.on_change [j] (name, wrapper)
+      end
       return wrapper
     else
       errors [#errors+1] = path
