@@ -93,8 +93,8 @@ function Hotswap:require (name, no_error)
       end
       local wrapper = Hotswap.wrap (self, result, name)
       self.loaded    [name] = wrapper
-      for j = 1, #self.on_change do
-        self.on_change [j] (name, wrapper)
+      for _, f in pairs (self.on_change) do
+        f (name, wrapper)
       end
       return wrapper
     else
