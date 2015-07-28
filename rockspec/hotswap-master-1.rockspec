@@ -13,13 +13,14 @@ description = {
 }
 
 dependencies = {
+  "lua      >= 5.1",
   "compat53 >= 0",
 }
 
 build = {
   type    = "builtin",
   modules = {
-    ["hotswap"     ] = "src/hotswap.lua",
+    ["hotswap"     ] = "src/hotswap/init.lua",
     ["hotswap.hash"] = "src/hotswap/hash.lua",
     ["hotswap.ev"  ] = "src/hotswap/ev.lua",
     ["hotswap.lfs" ] = "src/hotswap/lfs.lua",
