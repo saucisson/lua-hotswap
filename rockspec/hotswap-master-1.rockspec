@@ -9,6 +9,7 @@ description = {
   summary    = "Replacement for 'require' that allows hotswapping",
   detailed   = [[]],
   license    = "MIT/X11",
+  homepage   = "https://github.com/saucisson/lua-hotswap",
   maintainer = "Alban Linard <alban@linard.fr>",
 }
 
