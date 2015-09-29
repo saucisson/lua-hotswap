@@ -6,15 +6,14 @@ source = {
 }
 
 description = {
-  summary     = "Replacement for 'require' that allows hotswapping",
-  detailed    = [[]],
-  license     = "MIT/X11",
-  maintainer  = "Alban Linard <alban.linard@lsv.ens-cachan.fr>",
+  summary    = "Replacement for 'require' that allows hotswapping",
+  detailed   = [[]],
+  license    = "MIT/X11",
+  maintainer = "Alban Linard <alban@linard.fr>",
 }
 
 dependencies = {
-  "lua      >= 5.1",
-  "compat53 >= 0",
+  "lua >= 5.1",
 }
 
 build = {
