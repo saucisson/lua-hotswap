@@ -1,5 +1,5 @@
-if _VERSION == "Lua 5.1" then
-  assert (package.searchers)
+if not package.searchers then
+  package.searchers     = {}
   package.searchers [1] = function (name)
     return package.preload [name]
   end
