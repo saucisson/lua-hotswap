@@ -94,8 +94,8 @@ Compatibility
 -------------
 
 This module makes use of `package.searchers`, available from Lua 5.2. If you
-are running under Lua 5.1 or LuaJIT, please `require "compat52"` before
-requiring `hotswap`.
+are running under Lua 5.1 or LuaJIT, a fake `package.searchers` will be
+automatically created.
 
 Benchmarks
 ----------
