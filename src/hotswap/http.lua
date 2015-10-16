@@ -88,6 +88,9 @@ function Http.new (t)
 end
 
 function Http:preload ()
+  if not next (self.data) then
+    return
+  end
   local encoded = self.encode (self.data)
   local result
   if encoded then
