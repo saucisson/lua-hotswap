@@ -1,4 +1,4 @@
-package = "hotswap"
+package = "hotswap.ev"
 version = "master-1"
 
 source = {
@@ -6,7 +6,7 @@ source = {
 }
 
 description = {
-  summary    = "Replacement for 'require' that allows hotswapping",
+  summary    = "Hotswap backend using lua-ev",
   detailed   = [[]],
   license    = "MIT/X11",
   homepage   = "https://github.com/saucisson/lua-hotswap",
@@ -14,12 +14,15 @@ description = {
 }
 
 dependencies = {
-  "lua >= 5.1",
+  "lua      >= 5.1",
+  "hotswap  >= 1",
+  "lua-ev   >= v1",
+  "luaposix >= 33",
 }
 
 build = {
   type    = "builtin",
   modules = {
-    ["hotswap"] = "src/hotswap/init.lua",
+    ["hotswap.ev"] = "src/hotswap/ev.lua",
   },
 }
