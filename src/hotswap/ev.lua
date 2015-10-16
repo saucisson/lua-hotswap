@@ -1,3 +1,4 @@
+local posix   = require "posix"
 local ev      = require "ev"
 local Hotswap = getmetatable (require "hotswap")
 local Ev      = {}
@@ -16,12 +17,16 @@ function Ev:observe (name, filename)
     return
   end
   local hotswap = self
-  local stat = ev.Stat.new (function ()
-    hotswap.loaded [name] = nil
-    hotswap.try_require (name)
-  end, filename)
-  self.observed [name] = stat
-  stat:start (hotswap.loop)
+  local current = filename
+  repeat
+    local stat = ev.Stat.new (function ()
+      hotswap.loaded [name] = nil
+      hotswap.try_require (name)
+    end, current)
+    self.observed [current] = stat
+    stat:start (hotswap.loop)
+    current = posix.readlink (current)
+  until not current
 end
 
 return Ev.new ()
