@@ -1,4 +1,4 @@
-package = "hotswap.http"
+package = "hotswap-http"
 version = "master-1"
 
 source = {

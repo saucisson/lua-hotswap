@@ -1,4 +1,4 @@
-package = "hotswap.hash"
+package = "hotswap-hash"
 version = "master-1"
 
 source = {

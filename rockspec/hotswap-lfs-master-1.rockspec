@@ -1,4 +1,4 @@
-package = "hotswap.lfs"
+package = "hotswap-lfs"
 version = "master-1"
 
 source = {

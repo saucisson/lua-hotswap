@@ -1,4 +1,4 @@
-package = "hotswap.ev"
+package = "hotswap-ev"
 version = "master-1"
 
 source = {
