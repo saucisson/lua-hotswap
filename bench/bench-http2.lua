@@ -16,7 +16,9 @@ local hotswap = require "hotswap.http" {
     }
   end,
   decode = function (t)
-    return json.decode (t.body)
+    if t.code == 200 then
+      return json.decode (t.body)
+    end
   end,
 }
 
