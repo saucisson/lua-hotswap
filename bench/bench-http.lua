@@ -39,7 +39,7 @@ local hotswap = require "hotswap.http" {
 
 assert (os.execute [[
   rm -rf ./nginx/*.log ./nginx/*.pid
-  /usr/sbin/nginx -p ./nginx/ -c nginx.conf 2> /dev/null
+  /usr/sbin/nginx -p ./nginx/ -c nginx.conf
 ]])
 
 local start = gettime ()
