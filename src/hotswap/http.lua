@@ -52,7 +52,8 @@ end
 function Http.new (t)
   local instance = Hotswap.new {
     new     = Http.new,
-    preload = Http.preload,
+    init    = Http.init,
+    data    = {},
     load    = Http.load,
     save    = Http.save,
     encode  = t and t.encode or assert (false),
@@ -86,11 +87,11 @@ function Http.new (t)
   end
   table.insert (instance.searchers, 2, from_storage)
   table.insert (instance.searchers, 3, from_http   )
-  instance:preload ()
+  instance:init ()
   return instance
 end
 
-function Http:preload ()
+function Http:init ()
   if not next (self.data) then
     return
   end
