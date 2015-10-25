@@ -2,7 +2,6 @@ local http    = require "socket.http"
 local https   = require "ssl.https"
 local lfs     = require "lfs"
 local ltn12   = require "ltn12"
-local serpent = require "serpent"
 local Hotswap = getmetatable (require "hotswap")
 local Http    = {}
 
@@ -63,10 +62,14 @@ function Http.new (t)
   os.remove (instance.storage)
   lfs.mkdir (instance.storage)
   instance.downloaded = instance.storage .. "/_list"
-  local ok, data = serpent.load (instance.downloaded, {
-    safe = true,
-  })
-  instance.data = ok and data or {}
+  pcall (function ()
+    for line in io.lines (instance.downloaded) do
+      local module, etag = line:match "^([^:]+):(%w+)"
+      instance.data [module] = {
+        etag = etag,
+      }
+    end
+  end)
   local function from_storage (name)
     return loadfile (instance.storage .. "/" .. name)
   end
@@ -138,14 +141,9 @@ end
 function Http:save ()
   local file = io.open (self.downloaded, "w")
   if file then
-    file:write (serpent.dump (self.data, {
-      indent   = "  ",
-      comment  = false,
-      sortkeys = true,
-      compact  = false,
-      fatal    = true,
-      nocode   = true,
-    }))
+    for module, t in pairs (self.data) do
+      file:write (module .. ":" .. t.etag .. "\n")
+    end
     file:close ()
   end
 end
