@@ -41,8 +41,28 @@ function Hotswap.new (t)
   result.observe     = result.observe or function () end
   result.sources     = {}
   result.modules     = {}
-  result.loaded      = {}
   result.on_change   = {}
+  result.config      = package.config
+  result.cpath       = package.cpath
+  result.loaded      = {}
+  for k, v in pairs (package.loaded) do
+    local wrapper = Hotswap.wrap (result, v, k)
+    result.modules [k] = v
+    result.loaded  [k] = wrapper
+  end
+  result.loadlib     = package.loadlib
+  result.path        = package.path
+  result.preload     = {}
+  for k, v in pairs (package.preload) do
+    local wrapper = Hotswap.wrap (result, v, k)
+    result.modules [k] = v
+    result.preload [k] = wrapper
+  end
+  result.searchers   = {}
+  for i = 1, #package.searchers do
+    result.searchers [i] = package.searchers [i]
+  end
+  result.searchpath  = package.searchpath
   result.require     = function (name)
     return Hotswap.require (result, name, false)
   end
@@ -60,18 +80,11 @@ function Hotswap:require (name, no_error)
   if loaded then
     return loaded
   end
-  local lualoaded = package.loaded [name]
-  if lualoaded then
-    local wrapper = Hotswap.wrap (self, lualoaded, name)
-    self.modules [name] = lualoaded
-    self.loaded  [name] = wrapper
-    return wrapper
-  end
   local errors = {
     "module '" .. tostring (name) .. "' not found:",
   }
-  for i = 1, #package.searchers do
-    local searcher = package.searchers [i]
+  for i = 1, #self.searchers do
+    local searcher = self.searchers [i]
     local factory, path  = searcher (name)
     if type (factory) == "function" then
       local result

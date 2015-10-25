@@ -81,8 +81,8 @@ function Http.new (t)
     instance:save ()
     return from_storage (name)
   end
-  table.insert (package.searchers, 2, from_storage)
-  table.insert (package.searchers, 3, from_http   )
+  table.insert (instance.searchers, 2, from_storage)
+  table.insert (instance.searchers, 3, from_http   )
   instance:preload ()
   return instance
 end
