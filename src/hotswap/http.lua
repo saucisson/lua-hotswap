@@ -5,6 +5,7 @@ local ltn12   = require "ltn12"
 local Hotswap = getmetatable (require "hotswap")
 local Http    = {}
 
+
 --[[
 
 Send: {
@@ -40,13 +41,14 @@ local function request (t)
   else
     assert (false)
   end
-  return {
+  local ret = {
     body    = table.concat (result),
     code    = code,
     headers = headers,
     status  = status,
     request = t,
   }
+  return ret
 end
 
 function Http.new (t)
@@ -65,7 +67,7 @@ function Http.new (t)
   instance.downloaded = instance.storage .. "/_list"
   pcall (function ()
     for line in io.lines (instance.downloaded) do
-      local module, etag = line:match "^([^:]+):(%w+)"
+      local module, etag = line:match "^([^:]+):(%S+)"
       instance.data [module] = {
         etag = etag,
       }
@@ -131,12 +133,9 @@ function Http:load (key, t)
     file:write (t.lua)
     file:close ()
   end
-  self.data [key] = self.data [key] or {}
-  for k, v in pairs (t) do
-    if k ~= "lua" then
-      self.data [key] [k] = v
-    end
-  end
+  self.data [key] = {
+    etag = t.etag,
+  }
 end
 
 function Http:save ()
