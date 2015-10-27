@@ -5,7 +5,6 @@ local ltn12   = require "ltn12"
 local Hotswap = getmetatable (require "hotswap")
 local Http    = {}
 
--- local Serpent =  require ("serpent")  -- for debug
 
 --[[
 
@@ -32,7 +31,6 @@ local function request (t)
       url = t,
     }
   end
-  -- -- print (Serpent.dump (t))
   assert (type (t) == "table")
   t.sink = ltn12.sink.table (result)
   local _, code, headers, status
@@ -50,7 +48,6 @@ local function request (t)
     status  = status,
     request = t,
   }
---  print (Serpent.dump (ret))
   return ret
 end
 
@@ -77,14 +74,12 @@ function Http.new (t)
     end
   end)
   local function from_storage (name)
-    -- print ("from_storage", name) --Debug
     return loadfile (instance.storage .. "/" .. name)
   end
   local function from_http (name)
     local result = instance.decode (request (instance.encode {
       [name] = instance.data [name] or true,
     }))
-    -- print ("from_http result ", result) --Debug
     if not result then
       return
     end
@@ -99,8 +94,6 @@ function Http.new (t)
 end
 
 function Http:init ()
-  -- print ("file ", Serpent.dump (self.storage))
-  -- print ("data", Serpent.dump (self.data))
   if not next (self.data) then
     return
   end
@@ -125,7 +118,6 @@ function Http:init ()
 end
 
 function Http:load (key, t)
-  -- print ("load", key) --Debug
   assert (type (key) == "string")
   if not t then
     self.data [key] = nil
@@ -136,7 +128,6 @@ function Http:load (key, t)
   if not t.lua then
     return
   end
-  -- print (key)
   local file = io.open (self.storage .. "/" .. key, "w")
   if file then
     file:write (t.lua)
@@ -151,7 +142,6 @@ function Http:save ()
   local file = io.open (self.downloaded, "w")
   if file then
     for module, t in pairs (self.data) do
-      -- print ("module ", module, Serpent.dump (t))
       file:write (module .. ":" .. t.etag .. "\n")
     end
     file:close ()
