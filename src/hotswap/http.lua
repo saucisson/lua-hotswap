@@ -110,11 +110,12 @@ function Http:init ()
       result [key] = subresult [key]
     end
   end
-  assert (type (result) == "table")
-  for key, t in pairs (result) do
-    self:load (key, t)
+  if type (result) == "table" then
+    for key, t in pairs (result) do
+      self:load (key, t)
+    end
+    self:save ()
   end
-  self:save ()
 end
 
 function Http:load (key, t)
