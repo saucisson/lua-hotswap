@@ -1,5 +1,5 @@
 local http    = require "socket.http"
-local https   = require "ssl.https"
+local https   = pcall (require, "ssl.https") and require "ssl.https" or nil
 local lfs     = require "lfs"
 local ltn12   = require "ltn12"
 local Hotswap = getmetatable (require "hotswap")

@@ -17,7 +17,6 @@ dependencies = {
   "lua           >= 5.1",
   "hotswap       >= 1",
   "luafilesystem >= 1",
-  "luasec        >= 0",
   "luasocket     >= 2",
   "serpent       >= 0",
 }
