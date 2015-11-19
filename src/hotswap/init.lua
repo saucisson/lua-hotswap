@@ -1,4 +1,4 @@
-if not package.searchers then
+local function make_searchers (package)
   package.searchers     = {}
   package.searchers [1] = function (name)
     return package.preload [name]
@@ -31,6 +31,10 @@ if not package.searchers then
   end
 end
 
+if not package.searchers then
+  make_searchers (package)
+end
+
 local Hotswap = {}
 
 function Hotswap.new (t)
@@ -58,10 +62,7 @@ function Hotswap.new (t)
     result.modules [k] = v
     result.preload [k] = wrapper
   end
-  result.searchers   = {}
-  for i = 1, #package.searchers do
-    result.searchers [i] = package.searchers [i]
-  end
+  make_searchers (result)
   result.searchpath  = package.searchpath
   result.require     = function (name)
     return Hotswap.require (result, name, false)
