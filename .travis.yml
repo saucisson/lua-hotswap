@@ -27,7 +27,8 @@ install:
   - luarocks install luacov
   - luarocks install luacov-coveralls
   - luarocks install compat52
-  - luarocks make rockspec/*-master-1.rockspec
+  - luarocks make rockspec/hotswap-master-1.rockspec
+  - for file in rockspec/hotswap-*-master-1.rockspec; do luarocks make $file; done
 
 script:
   - luacheck --std max+busted src/hotswap/*.lua
