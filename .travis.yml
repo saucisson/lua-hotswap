@@ -1,0 +1,44 @@
+# Taken from https://github.com/kikito/middleclass/blob/master/.travis.yml
+os: linux
+language: python
+sudo: false
+
+addons:
+  apt:
+    packages:
+      - libev-dev
+      - nginx
+
+env:
+  - LUA="lua=5.1"
+  - LUA="lua=5.2"
+  - LUA="lua=5.3"
+  - LUA="luajit=2.0"
+  - LUA="luajit=2.1"
+
+before_install:
+  - pip install hererocks
+  - hererocks lua_install -r^ --$LUA # --compat=none
+  - export PATH=$PATH:$PWD/lua_install/bin
+
+install:
+  - luarocks install luacheck
+  - luarocks install busted
+  - luarocks install luacov
+  - luarocks install luacov-coveralls
+  - luarocks install compat52
+  - luarocks make rockspec/*-master-1.rockspec
+
+script:
+  - luacheck --std max+busted src/hotswap/*.lua
+  - busted --verbose --coverage --pattern=test test
+
+after_success:
+  - luacov-coveralls --exclude "test" --exclude "lua_install"
+
+notifications:
+  recipients:
+    - alban@linard.fr
+  email:
+    on_success: change
+    on_failure: always
