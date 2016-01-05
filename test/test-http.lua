@@ -41,7 +41,7 @@ describe ("the hotswap.http module", function ()
       elseif t.code == 404 then
         return {}
       else
-        assert (false)
+        return nil
       end
     end,
   }
