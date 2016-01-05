@@ -29,7 +29,7 @@ install:
   - VERSION=$(lua -e "print (_VERSION:match '%d%.%d')") && [ "$VERSION" == "5.1" ] && luarocks install compat52 || echo -n
   - luarocks make rockspec/hotswap-master-1.rockspec
   - for file in rockspec/hotswap-*-master-1.rockspec; do luarocks make $file; done
-  - mkdir /var/lib/nginx
+  - ls -lh /var/lib/nginx && echo $USER
 
 script:
   - luacheck --std max+busted src/hotswap/*.lua
