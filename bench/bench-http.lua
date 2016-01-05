@@ -37,10 +37,24 @@ local hotswap = require "hotswap.http" {
   end,
 }
 
-assert (os.execute [[
-  rm -rf ./nginx/*.log ./nginx/*.pid
-  /usr/sbin/nginx -p ./nginx/ -c nginx.conf
-]])
+local tmp = os.tmpname ()
+do
+  local conf_file = io.open ("nginx.conf", "r")
+  local conf      = conf_file:read "*all"
+  conf_file:close ()
+  conf = conf:gsub ("{{{TMP}}}", tmp)
+  conf_file = io.open (tmp, "w")
+  conf_file:write (conf .. "\n")
+  conf_file:close ()
+  local command = ([[
+    mv    {{{TMP}}} {{{TMP}}}.back
+    mkdir -p {{{TMP}}}
+    mv    {{{TMP}}}.back {{{TMP}}}/nginx.conf
+    nginx -s stop
+    nginx -p {{{TMP}}} -c {{{TMP}}}/nginx.conf
+  ]]):gsub ("{{{TMP}}}", tmp)
+  assert (os.execute (command))
+end
 
 local start = gettime ()
 for _ = 1, n do
@@ -49,6 +63,10 @@ end
 local finish = gettime ()
 
 print (math.floor (n / (finish - start)), "requires/second")
-assert (os.execute [[
-  kill -QUIT $(cat ./nginx/nginx.pid)
-]])
+do
+  local command = ([[
+    kill -QUIT $(cat {{{TMP}}}/nginx.pid)
+    rm   -rf {{{TMP}}}
+  ]]):gsub ("{{{TMP}}}", tmp)
+  assert (os.execute (command))
+end

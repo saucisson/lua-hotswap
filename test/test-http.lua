@@ -48,13 +48,20 @@ describe ("the hotswap.http module", function ()
 
   setup (function ()
     tmp = os.tmpname ()
+    local conf_file = io.open ("bench/nginx/nginx.conf", "r")
+    local conf      = conf_file:read "*all"
+    conf_file:close ()
+    conf = conf:gsub ("{{{TMP}}}", tmp)
+    conf_file = io.open (tmp, "w")
+    conf_file:write (conf .. "\n")
+    conf_file:close ()
     local command = ([[
-      rm    -f {{{TMP}}}
+      mv    {{{TMP}}} {{{TMP}}}.back
       mkdir -p {{{TMP}}}
-      cp bench/nginx/nginx.conf {{{TMP}}}/nginx.conf
+      mv    {{{TMP}}}.back {{{TMP}}}/nginx.conf
+      nginx -s stop
       nginx -p {{{TMP}}} -c {{{TMP}}}/nginx.conf
     ]]):gsub ("{{{TMP}}}", tmp)
-    print (command)
     assert (os.execute (command))
   end)
 
