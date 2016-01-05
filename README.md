@@ -1,5 +1,7 @@
-Require with hotswapping
-========================
+[![Build Status](https://travis-ci.org/saucisson/lua-hotswap.svg?branch=master)](https://travis-ci.org/saucisson/lua-hotswap)
+[![Coverage Status](https://coveralls.io/repos/saucisson/lua-hotswap/badge.svg?branch=master&service=github)](https://coveralls.io/github/saucisson/lua-hotswap?branch=master)
+
+# Require with hotswapping
 
 Sometimes, we would like to reload automatically an updated module
 within a long-running program. The `hotswap` module provides such
@@ -7,17 +9,15 @@ functionality, using various backends for change detection.
 
 See [Wikipedia](https://en.wikipedia.org/wiki/Hot_swapping#Software)
 
-Install
--------
+## Install
 
-This module is available as a Lua rock:
+This module is available in [luarocks](https://luarocks.org):
 
 ````sh
     luarocks install hotswap
 ````
 
-Example
--------
+## Example
 
 The easiest way to use this library is as below:
 
@@ -71,8 +71,7 @@ The `hotswap` can even replace the `require` function easily:
     require = require "hotswap.xxx".require
 ````
 
-Backends
---------
+## Backends
 
 Currently, the following backends are supported:
 
@@ -83,6 +82,9 @@ Currently, the following backends are supported:
 * `hotswap.hash`: this backend detects module changes by checking file hashes
   using `xxhah`,
   see [this example](bench/bench-hash.lua);
+* `hotswap.http`: this backend loads modules from a HTTP server,
+  and avoids useless downloads,
+  see [this example](bench/bench-http.lua);
 * `hotswap.lfs`: this backend detects module changes by observing file
   modification date using `luafilesystem`,
   see [this example](bench/bench-lfs.lua).
@@ -90,15 +92,13 @@ Currently, the following backends are supported:
 Notice that the dependencies for each backend are not listed in the rockspec.
 Make sure to install them!
 
-Compatibility
--------------
+## Compatibility
 
 This module makes use of `package.searchers`, available from Lua 5.2. If you
 are running under Lua 5.1 or LuaJIT, a fake `package.searchers` will be
 automatically created.
 
-Benchmarks
-----------
+## Benchmarks
 
 The [bench](bench/) directory contains benchmarks for the backends. They
 can be run using:
@@ -112,3 +112,11 @@ can be run using:
     done
     cd ..
 ````
+
+
+# Test
+
+Tests are written for [busted](http://olivinelabs.com/busted).
+```bash
+  busted test/*.lua
+```
