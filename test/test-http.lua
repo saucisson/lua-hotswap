@@ -54,6 +54,7 @@ describe ("the hotswap.http module", function ()
       cp bench/nginx/nginx.conf {{{TMP}}}/nginx.conf
       nginx -p {{{TMP}}} -c {{{TMP}}}/nginx.conf
     ]]):gsub ("{{{TMP}}}", tmp)
+    print (command)
     assert (os.execute (command))
   end)
 
