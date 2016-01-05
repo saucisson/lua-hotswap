@@ -7,7 +7,7 @@ addons:
   apt:
     packages:
       - libev-dev
-      - nginx
+      - nginx-full
 
 env:
   - LUA="lua=5.1"
