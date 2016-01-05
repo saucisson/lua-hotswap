@@ -31,7 +31,7 @@ describe ("the hotswap.ev module", function ()
     assert.has.no.error (function ()
       local Hotswap = require "hotswap.ev"
       ev.Idle.new (function (loop, idle, _)
-        Hotswap.require "coroutine.make"
+        Hotswap.require "busted"
         idle:stop (loop)
         loop:unloop ()
       end):start (ev.Loop.default)
@@ -55,7 +55,7 @@ describe ("the hotswap.ev module", function ()
     assert.has.no.error (function ()
       local Hotswap = require "hotswap.ev"
       ev.Idle.new (function (loop, idle, _)
-        assert.is_truthy (Hotswap.try_require "coroutine.make")
+        assert.is_truthy (Hotswap.try_require "busted")
         assert.is_falsy  (Hotswap.try_require "nonexisting")
         idle:stop (loop)
         loop:unloop ()

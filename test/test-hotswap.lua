@@ -24,7 +24,7 @@ describe ("the hotswap module", function ()
   it ("requires lua modules", function ()
     assert.has.no.error (function ()
       local Hotswap = require "hotswap"
-      Hotswap.require "coroutine.make"
+      Hotswap.require "busted"
     end)
   end)
 
@@ -38,7 +38,7 @@ describe ("the hotswap module", function ()
   it ("allows to test require", function ()
     assert.has.no.error (function ()
       local Hotswap = require "hotswap"
-      assert.is_truthy (Hotswap.try_require "coroutine.make")
+      assert.is_truthy (Hotswap.try_require "busted")
       assert.is_falsy  (Hotswap.try_require "nonexisting")
     end)
   end)
