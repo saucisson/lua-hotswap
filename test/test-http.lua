@@ -21,7 +21,7 @@ describe ("the hotswap.http module", function ()
     server:close ()
     port = p
     tmp  = os.tmpname ()
-    local conf_file = io.open ("bench/nginx/nginx.conf", "r")
+    local conf_file = io.open ("test/nginx.conf", "r")
     local conf      = conf_file:read "*all"
     conf_file:close ()
     conf = conf
