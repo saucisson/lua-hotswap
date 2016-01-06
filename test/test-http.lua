@@ -80,6 +80,10 @@ describe ("the hotswap.http module", function ()
   teardown (function ()
     local command = ([[
       kill -QUIT $(cat {{{TMP}}}/nginx.pid)
+      echo "Access log"
+      cat  {{{TMP}}}/access.log
+      echo "Error log"
+      cat  {{{TMP}}}/error.log
       rm   -rf {{{TMP}}}
     ]]):gsub ("{{{TMP}}}", tmp)
     assert (os.execute (command))
