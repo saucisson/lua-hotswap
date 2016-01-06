@@ -46,12 +46,6 @@ describe ("the hotswap.http module", function ()
           return
         end
         local k, v = next (t)
-        print ("encode", k, v)
-        if type (v) == "table" then
-          for x, y in pairs (v) do
-            print ("v", x, y)
-          end
-        end
         return {
           url     = "http://127.0.0.1:" .. tostring (port) .. "/lua/" .. k,
           method  = "GET",
@@ -63,10 +57,6 @@ describe ("the hotswap.http module", function ()
       end,
       decode = function (t)
         local module = t.request.headers ["Lua-Module"]
-        print ("decode", module)
-        for k, v in pairs (t.request.headers) do
-          print (k, v)
-        end
         if t.code == 200 then
           return {
             [module] = {
@@ -90,10 +80,6 @@ describe ("the hotswap.http module", function ()
   teardown (function ()
     local command = ([[
       kill -QUIT $(cat {{{TMP}}}/nginx.pid)
-      echo "Access log"
-      cat  {{{TMP}}}/access.log
-      echo "Error log"
-      cat  {{{TMP}}}/error.log
       rm   -rf {{{TMP}}}
     ]]):gsub ("{{{TMP}}}", tmp)
     assert (os.execute (command))
