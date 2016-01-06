@@ -29,7 +29,6 @@ describe ("the hotswap.http module", function ()
          :gsub ("{{{PORT}}}" , tostring (port))
          :gsub ("{{{PATH}}}" , string.format ("%q", package.path  .. ";" .. package.path :gsub ("5%.%d", "5.1")))
          :gsub ("{{{CPATH}}}", string.format ("%q", package.cpath .. ";" .. package.cpath:gsub ("5%.%d", "5.1")))
-    print (conf)
     conf_file = io.open (tmp, "w")
     conf_file:write (conf .. "\n")
     conf_file:close ()
@@ -47,6 +46,10 @@ describe ("the hotswap.http module", function ()
           return
         end
         local k, v = next (t)
+        print ("encode", k, v)
+        for x, y in pairs (v) do
+          print ("v", x, y)
+        end
         return {
           url     = "http://127.0.0.1:" .. tostring (port) .. "/lua/" .. k,
           method  = "GET",
@@ -58,6 +61,10 @@ describe ("the hotswap.http module", function ()
       end,
       decode = function (t)
         local module = t.request.headers ["Lua-Module"]
+        print ("decode", module)
+        for k, v in pairs (t.request.headers) do
+          print (k, v)
+        end
         if t.code == 200 then
           return {
             [module] = {
