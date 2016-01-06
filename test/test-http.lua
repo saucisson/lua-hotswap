@@ -47,8 +47,10 @@ describe ("the hotswap.http module", function ()
         end
         local k, v = next (t)
         print ("encode", k, v)
-        for x, y in pairs (v) do
-          print ("v", x, y)
+        if type (v) == "table" then
+          for x, y in pairs (v) do
+            print ("v", x, y)
+          end
         end
         return {
           url     = "http://127.0.0.1:" .. tostring (port) .. "/lua/" .. k,
