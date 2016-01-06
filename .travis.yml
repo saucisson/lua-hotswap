@@ -28,12 +28,11 @@ before_install:
 
 install:
   - $PWD/lua_nginx/bin/luarocks --tree=$PWD/lua_install install compat52
-  - $PWD/lua_nginx/bin/luarocks --tree=$PWD/lua_install install cjson
+  - $PWD/lua_nginx/bin/luarocks --tree=$PWD/lua_install install lua-cjson
   - luarocks install luacheck
   - luarocks install busted
   - luarocks install luacov
   - luarocks install luacov-coveralls
-#  - VERSION=$(lua -e "print (_VERSION:match '%d%.%d')") && [ "$VERSION" == "5.1" ] && luarocks install compat52 || echo -n
   - luarocks make rockspec/hotswap-master-1.rockspec
   - for file in rockspec/hotswap-*-master-1.rockspec; do luarocks make $file; done
 
