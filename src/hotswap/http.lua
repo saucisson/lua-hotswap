@@ -143,7 +143,7 @@ function Http:save ()
   local file = io.open (self.downloaded, "w")
   if file then
     for module, t in pairs (self.data) do
-      file:write (module .. ":" .. t.etag .. "\n")
+      file:write (module .. ":" .. tostring (t.etag) .. "\n")
     end
     file:close ()
   end
