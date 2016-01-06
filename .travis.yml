@@ -33,6 +33,7 @@ install:
   - luarocks install busted
   - luarocks install luacov
   - luarocks install luacov-coveralls
+  - luarocks install coronest
   - luarocks make rockspec/hotswap-master-1.rockspec
   - for file in rockspec/hotswap-*-master-1.rockspec; do luarocks make $file; done
 
