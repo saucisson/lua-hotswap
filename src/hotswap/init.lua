@@ -81,6 +81,19 @@ function Hotswap:require (name, no_error)
   if loaded then
     return loaded
   end
+  local back = {
+    require = (_G or _ENV).require,
+    package = (_G or _ENV).package,
+  }
+  local function exit (...)
+    (_G or _ENV).require = back.require;
+    (_G or _ENV).package = back.package;
+    return ...
+  end
+  (_G or _ENV).require = function (...)
+    return self.require (...)
+  end
+  (_G or _ENV).package = self;
   local errors = {
     "module '" .. tostring (name) .. "' not found:",
   }
@@ -93,7 +106,7 @@ function Hotswap:require (name, no_error)
         local ok
         ok, result = pcall (factory, name)
         if not ok then
-          return nil, result
+          return exit (nil, result)
         end
       else
         result = factory (name)
@@ -108,16 +121,16 @@ function Hotswap:require (name, no_error)
       for _, f in pairs (self.on_change) do
         f (name, wrapper)
       end
-      return wrapper
+      return exit (wrapper)
     else
       errors [#errors+1] = path
     end
   end
   errors = table.concat (errors, "\n")
   if no_error then
-    return nil, errors
+    return exit (nil, errors)
   else
-    error (errors)
+    error (exit (errors))
   end
 end
 
