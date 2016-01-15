@@ -40,30 +40,28 @@ local Hotswap = {}
 function Hotswap.new (t)
   assert (t == nil or type (t) == "table")
   local result       = t              or {}
+  for k, v in pairs (package) do
+    result [k] = v
+  end
   result.new         = result.new     or Hotswap.new
   result.access      = result.access  or function () end
   result.observe     = result.observe or function () end
   result.sources     = {}
   result.modules     = {}
   result.on_change   = {}
-  result.config      = package.config
-  result.cpath       = package.cpath
   result.loaded      = {}
+  result.preload     = {}
   for k, v in pairs (package.loaded) do
     local wrapper = Hotswap.wrap (result, v, k)
     result.modules [k] = v
     result.loaded  [k] = wrapper
   end
-  result.loadlib     = package.loadlib
-  result.path        = package.path
-  result.preload     = {}
   for k, v in pairs (package.preload) do
     local wrapper = Hotswap.wrap (result, v, k)
     result.modules [k] = v
     result.preload [k] = wrapper
   end
   make_searchers (result)
-  result.searchpath  = package.searchpath
   result.require     = function (name)
     return Hotswap.require (result, name, false)
   end
@@ -81,19 +79,20 @@ function Hotswap:require (name, no_error)
   if loaded then
     return loaded
   end
+  local global = _G or _ENV
   local back = {
-    require = (_G or _ENV).require,
-    package = (_G or _ENV).package,
+    require = global.require,
+    package = global.package,
   }
   local function exit (...)
-    (_G or _ENV).require = back.require;
-    (_G or _ENV).package = back.package;
+    global.require = back.require
+    global.package = back.package
     return ...
   end
-  (_G or _ENV).require = function (...)
+  global.require = function (...)
     return self.require (...)
   end
-  (_G or _ENV).package = self;
+  global.package = self
   local errors = {
     "module '" .. tostring (name) .. "' not found:",
   }
