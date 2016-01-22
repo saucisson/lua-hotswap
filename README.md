@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/saucisson/lua-hotswap.svg?branch=master)](https://travis-ci.org/saucisson/lua-hotswap)
 [![Coverage Status](https://coveralls.io/repos/saucisson/lua-hotswap/badge.svg?branch=master&service=github)](https://coveralls.io/github/saucisson/lua-hotswap?branch=master)
+[![Join the chat at https://gitter.im/saucisson/lua-hotswap](https://badges.gitter.im/saucisson/lua-hotswap.svg)](https://gitter.im/saucisson/lua-hotswap?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 # Require with hotswapping
 
